@@ -1,4 +1,4 @@
-import logger as logger
+from logger import  Logger
 import initializer as initializer
 
 
@@ -10,7 +10,7 @@ def main():
 
 if __name__=='__main__':
     initializer.init()
-    logger.debug("go!")
+    Logger.debug("go!")
 
 
 
