@@ -1,3 +1,4 @@
+import json
 import os.path
 import time
 import shutil
@@ -103,6 +104,18 @@ class AppSys:
     def init_sys():
         AppSys.init_dirs()
         AppSys.init_config()
+
+###########################################json
+    @staticmethod
+    def dump_by_json(fp,data):
+        with open(fp,'w') as wf:
+            json.dump(data,wf,indent=2)
+
+    @staticmethod
+    def load_by_json(fp):
+        with open(fp,'r') as rf:
+            data=json.load(rf)
+        return data
 
 AppSys.Params=Params
 

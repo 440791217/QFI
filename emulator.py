@@ -56,7 +56,7 @@ class Emulator:
 
     ##############################trace inst
     @staticmethod
-    def wash_trace_record(trace_inst_log, trace_inst_wash_log,trace_golden_result_log):
+    def wash_trace_record(trace_inst_log, trace_inst_wash_log, trace_golden_result_log):
         prefix_identify = 'my_qemu_addr:'
         with open(trace_inst_log, 'r') as rf:
             with open(trace_inst_wash_log, 'w') as wf:
@@ -68,26 +68,26 @@ class Emulator:
             ###collect golden result
             with open(trace_golden_result_log, 'w') as wf:
                 for l in ls:
-                    l=l.strip()
-                    if len(l)>0 and prefix_identify not in l:
+                    l = l.strip()
+                    if len(l) > 0 and prefix_identify not in l:
                         wf.write(l)
                         wf.write('\r\n')
 
     @staticmethod
     def gen_trace_record(trace_inst_log, qemu_args):
         ###################trace inst log
-        with open(trace_inst_log, 'w') as wf:
-            with open(trace_inst_log, 'r') as rf:
-                proc = subprocess.Popen(qemu_args, text=True, stdout=wf)
-                while True:
-                    AppSys.sleep(2)
-                    ls = rf.readlines()
-                    current = len(ls)
-                    AppSys.debug('current:{}'.format(current))
-                    if current == 0:
-                        break  ##the program complete the inst tracing
-                if proc.poll() is None:
-                    proc.terminate()
+        with open(trace_inst_log, 'w+') as wf:
+            # with open(trace_inst_log, 'r') as rf:
+            proc = subprocess.Popen(qemu_args, text=True, stdout=wf)
+            while True:
+                AppSys.sleep(2)
+                ls = wf.readlines()
+                current = len(ls)
+                AppSys.debug('current:{}'.format(current))
+                if current == 0:
+                    break  ##the program complete the inst tracing
+            if proc.poll() is None:
+                proc.terminate()
 
     ############################extract_inst
     @staticmethod
@@ -124,7 +124,7 @@ class Emulator:
         return total_inst
 
     @staticmethod
-    def gen_reg_fault(id,regs, bfm, total_inst,reg_width):
+    def gen_reg_fault(id, regs, bfm, total_inst, reg_width):
         reg = random.sample(regs, 1)
         inst = random.randint(0, total_inst - 1)
         flips = random.sample(range(reg_width), bfm)
@@ -138,15 +138,15 @@ class Emulator:
         return fault
 
     @staticmethod
+    def inject_reg_fault(fault):
+        pass
+
+    @staticmethod
     def gen_inst_fault():
         pass
 
     @staticmethod
     def gen_mem_fault():
-        pass
-
-    @staticmethod
-    def inject_reg_fault():
         pass
 
     @staticmethod
@@ -158,10 +158,21 @@ class Emulator:
         pass
 
     def inject_faults(self):
-        if self.fi_mode==AppSys.Params.FAULT_MODE_RF:
-            fp=self.fi_file_reg_faults
+        if self.fi_mode == AppSys.Params.FAULT_MODE_RF:
+            fp = self.fi_file_reg_faults
         else:
             AppSys.except_with_msg(msg='the file of faults does not exist!')
+        faults=AppSys.load_by_json(fp)
+        for fault in faults:
+            if fault['id'] != 0 and fault['id'] % 50 == 0:
+                AppSys.dump_by_json(fp=fp,data=faults)
+            if fault['injected']:
+                continue  # skip injected
+            if self.fi_mode == AppSys.Params.FAULT_MODE_RF:
+                Emulator.inject_reg_fault(fault=fault)
+            fault['injected'] = True
+                #print(fault)
+        AppSys.dump_by_json(fp=fp, data=faults)
         pass
 
     def extract_inst(self):
@@ -182,14 +193,11 @@ class Emulator:
         if self.fi_clear_result or not os.path.exists(fp):
             for i in range(self.fi_exec_times):
                 if self.fi_mode == AppSys.Params.FAULT_MODE_RF:
-                    fault=Emulator.gen_reg_fault(id=i,regs=self.fi_regs,bfm=self.fi_bfm,
-                                                 reg_width=self.fi_reg_width,total_inst=self.total_inst)
+                    fault = Emulator.gen_reg_fault(id=i, regs=self.fi_regs, bfm=self.fi_bfm,
+                                                   reg_width=self.fi_reg_width, total_inst=self.total_inst)
                     faults.append(fault)
-            with open(fp, 'w') as wf:
-                json.dump(faults, wf, indent=1)
+            AppSys.dump_by_json(fp=fp,data=faults)
         return fp
-
-
 
     def main(self):
         if not os.path.exists(self.objdump_log):
@@ -203,7 +211,8 @@ class Emulator:
         else:
             AppSys.debug('skip objdump_wash_log!')
         if not os.path.exists(self.trace_inst_log):
-            Emulator.gen_trace_record(trace_inst_log=self.trace_inst_log, qemu_args=AppSys.Params.get_qemu_trace_inst_args())
+            Emulator.gen_trace_record(trace_inst_log=self.trace_inst_log,
+                                      qemu_args=AppSys.Params.get_qemu_trace_inst_args())
             AppSys.debug('complete trace_inst_log!')
         else:
             AppSys.debug('skip trace_inst_log!')
