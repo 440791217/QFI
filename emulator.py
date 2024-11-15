@@ -1,10 +1,5 @@
 import os.path
 import subprocess
-
-from sympy import false
-
-from logger import Logger
-from constant import Constant
 from appSys import AppSys
 import random
 import json
@@ -13,24 +8,24 @@ import json
 class Emulator:
 
     def __init__(self, **args):
-        Logger.debug("Emulator Init")
-        self.trace_inst_log = Constant.get_file_path_app_trace_inst()
-        self.trace_inst_wash_log = Constant.get_file_path_app_trace_inst_wash()
-        self.trace_golden_result_log = Constant.get_file_path_app_trace_golden_result()
-        self.objdump_log = Constant.get_file_path_app_objdump()
-        self.objdump_wash_log = Constant.get_file_path_app_objdump_wash()
-        self.objdump_bin = Constant.BIN_OBJ_DUMP
-        self.elf_bin = Constant.get_file_path_app_bin()
+        AppSys.debug("Emulator Init")
+        self.trace_inst_log = AppSys.Params.get_file_path_app_trace_inst()
+        self.trace_inst_wash_log = AppSys.Params.get_file_path_app_trace_inst_wash()
+        self.trace_golden_result_log = AppSys.Params.get_file_path_app_trace_golden_result()
+        self.objdump_log = AppSys.Params.get_file_path_app_objdump()
+        self.objdump_wash_log = AppSys.Params.get_file_path_app_objdump_wash()
+        self.objdump_bin = AppSys.Params.BIN_OBJ_DUMP
+        self.elf_bin = AppSys.Params.get_file_path_app_bin()
         self.total_inst = -1
         self.main_entry_addr = -1
         #####fi info
-        self.fi_exec_times = Constant.EXEC_TIMES
-        self.fi_mode = Constant.FAULT_MODE
-        self.fi_bfm = Constant.FAULT_BFM
-        self.fi_regs = Constant.FAULT_REGS
-        self.fi_reg_width = Constant.FAULT_REG_WIDTH
-        self.fi_file_reg_faults = Constant.get_file_path_app_reg_faults()
-        self.fi_clear_result = Constant.FAULT_CLEAR_RESULT
+        self.fi_exec_times = AppSys.Params.EXEC_TIMES
+        self.fi_mode = AppSys.Params.FAULT_MODE
+        self.fi_bfm = AppSys.Params.FAULT_BFM
+        self.fi_regs = AppSys.Params.FAULT_REGS
+        self.fi_reg_width = AppSys.Params.FAULT_REG_WIDTH
+        self.fi_file_reg_faults = AppSys.Params.get_file_path_app_reg_faults()
+        self.fi_clear_result = AppSys.Params.FAULT_CLEAR_RESULT
         pass
 
     ###########################disassemble
@@ -88,7 +83,7 @@ class Emulator:
                     AppSys.sleep(2)
                     ls = rf.readlines()
                     current = len(ls)
-                    Logger.debug('current:{}'.format(current))
+                    AppSys.debug('current:{}'.format(current))
                     if current == 0:
                         break  ##the program complete the inst tracing
                 if proc.poll() is None:
@@ -100,12 +95,12 @@ class Emulator:
         ##read main function entry addr in .elf file
         with open(objdump_wash_log, 'r') as rf:
             ls = rf.readlines()
-            entry_identify = Constant.get_elf_entry_addr_identify()
+            entry_identify = AppSys.Params.get_elf_entry_addr_identify()
             for i in range(len(ls)):
                 l = ls[i]
                 if entry_identify in l:
                     entry_addr = l.split(' ')[0].strip()
-                    Logger.debug('main_entry_addr:{}'.format(entry_addr))
+                    AppSys.debug('main_entry_addr:{}'.format(entry_addr))
                     break
             if entry_addr == -1:
                 AppSys.except_with_msg(msg="errors in extract_inst is for entry_identify!")
@@ -125,7 +120,7 @@ class Emulator:
                 total_inst -= 1
         if total_inst < 1:
             AppSys.except_with_msg(msg='validate main_entry is in failing! total_inst:{}'.format(total_inst))
-        Logger.debug('validate main_entry successfully! total_inst:{}'.format(total_inst))
+        AppSys.debug('validate main_entry successfully! total_inst:{}'.format(total_inst))
         return total_inst
 
     @staticmethod
@@ -151,7 +146,22 @@ class Emulator:
         pass
 
     @staticmethod
+    def inject_reg_fault():
+        pass
+
+    @staticmethod
+    def inject_mem_fault():
+        pass
+
+    @staticmethod
+    def inject_inst_fault():
+        pass
+
     def inject_faults(self):
+        if self.fi_mode==AppSys.Params.FAULT_MODE_RF:
+            fp=self.fi_file_reg_faults
+        else:
+            AppSys.except_with_msg(msg='the file of faults does not exist!')
         pass
 
     def extract_inst(self):
@@ -165,15 +175,13 @@ class Emulator:
         faults = []
         if self.fi_exec_times < 1:
             AppSys.except_with_msg('fi_exec_times<1!')
-        if self.fi_mode == Constant.FAULT_MODE_RF:
+        if self.fi_mode == AppSys.Params.FAULT_MODE_RF:
             fp = self.fi_file_reg_faults
-            # Emulator.gen_reg_faults(fp=self.fi_file_reg_faults,
-            #                         fi_regs=self.fi_regs,fi_bfm=self.fi_bfm,fi_exec_times=self.fi_exec_times)
         else:
             AppSys.except_with_msg(msg='invalid fault mode occurs! fi_mode:{}'.format(self.fi_mode))
-        if self.fi_clear_result or os.path.exists(fp) is False:
+        if self.fi_clear_result or not os.path.exists(fp):
             for i in range(self.fi_exec_times):
-                if self.fi_mode == Constant.FAULT_MODE_RF:
+                if self.fi_mode == AppSys.Params.FAULT_MODE_RF:
                     fault=Emulator.gen_reg_fault(id=i,regs=self.fi_regs,bfm=self.fi_bfm,
                                                  reg_width=self.fi_reg_width,total_inst=self.total_inst)
                     faults.append(fault)
@@ -184,18 +192,37 @@ class Emulator:
 
 
     def main(self):
-        # Emulator.disassemble(objdump_log=self.objdump_log, objdump_bin=self.objdump_bin, elf_bin=self.elf_bin)
-        # Emulator.wash_objdump(objdump_log=self.objdump_log, objdump_wash_log=self.objdump_wash_log)
-
-        # Emulator.gen_trace_record(trace_inst_log=self.trace_inst_log, qemu_args=Constant.get_qemu_trace_inst_args())
-        Emulator.wash_trace_record(trace_inst_log=self.trace_inst_log, trace_inst_wash_log=self.trace_inst_wash_log,
-                                   trace_golden_result_log=self.trace_golden_result_log)  ##################wash log
+        if not os.path.exists(self.objdump_log):
+            Emulator.disassemble(objdump_log=self.objdump_log, objdump_bin=self.objdump_bin, elf_bin=self.elf_bin)
+            AppSys.debug('complete disassemble!')
+        else:
+            AppSys.debug('skip disassemble!')
+        if not os.path.exists(self.objdump_wash_log):
+            Emulator.wash_objdump(objdump_log=self.objdump_log, objdump_wash_log=self.objdump_wash_log)
+            AppSys.debug('complete objdump_wash_log!')
+        else:
+            AppSys.debug('skip objdump_wash_log!')
+        if not os.path.exists(self.trace_inst_log):
+            Emulator.gen_trace_record(trace_inst_log=self.trace_inst_log, qemu_args=AppSys.Params.get_qemu_trace_inst_args())
+            AppSys.debug('complete trace_inst_log!')
+        else:
+            AppSys.debug('skip trace_inst_log!')
+        if not os.path.exists(self.trace_inst_wash_log) or not os.path.exists(self.trace_golden_result_log):
+            Emulator.wash_trace_record(trace_inst_log=self.trace_inst_log, trace_inst_wash_log=self.trace_inst_wash_log,
+                                       trace_golden_result_log=self.trace_golden_result_log)  ##################wash log
+            AppSys.debug('complete wash_trace_record!')
+        else:
+            AppSys.debug('skip wash_trace_record!')
 
         self.extract_inst()
         self.gen_faults()
+        self.inject_faults()
         pass
 
 
 if __name__ == '__main__':
+    if AppSys.Params.FAULT_RESET_ALL:
+        AppSys.delete_by_path(AppSys.Params.get_dir_path_app_tmp())
+        AppSys.init_sys()
     emulator = Emulator()
     emulator.main()

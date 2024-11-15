@@ -1,5 +1,4 @@
-from logger import  Logger
-import initializer as initializer
+from appSys import  AppSys
 
 
 
@@ -9,8 +8,7 @@ def main():
 
 
 if __name__=='__main__':
-    initializer.init()
-    Logger.debug("go!")
+    AppSys.debug("go!")
 
 
 
