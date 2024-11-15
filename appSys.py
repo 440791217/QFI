@@ -18,6 +18,19 @@ class AppSys:
         time.sleep(tm)
         Logger.debug('sleep in {} sec!'.format(tm))
 
+    @staticmethod
+    def except_with_msg(code=-1,msg=None):
+        if msg is not None:
+            Logger.error(msg)
+        exit(code)
+
+    @staticmethod
+    def except_if_not_exists(fp,msg=None):
+        if os.path.exists(fp) is False:
+            if msg is not None:
+                Logger.error(msg)
+            exit(-1)
+
 
 if __name__ == '__main__':
     pass

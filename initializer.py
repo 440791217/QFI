@@ -27,7 +27,7 @@ def init_config():
             binObjDump=Constant.BIN_OBJ_DUMP
             data={
                 'fault':{
-                    'bfm':Constant.FAULT_BFM_SINGLE,
+                    'bfm':Constant.FAULT_BFM_1,
                     'mode':Constant.FAULT_MODE_RF,
                 },
                 'exe_times':Constant.EXEC_TIMES,
