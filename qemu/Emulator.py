@@ -1,8 +1,7 @@
 import os.path
 import subprocess
-from appSys import AppSys
+from system.AppSys import AppSys
 import random
-import json
 
 
 class Emulator:
@@ -228,10 +227,12 @@ class Emulator:
         self.inject_faults()
         pass
 
-
-if __name__ == '__main__':
+def test():
     if AppSys.Params.FAULT_RESET_ALL:
         AppSys.delete_by_path(AppSys.Params.get_dir_path_app_tmp())
         AppSys.init_sys()
     emulator = Emulator()
     emulator.main()
+
+if __name__ == '__main__':
+    test()

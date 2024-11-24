@@ -1,4 +1,4 @@
-from appSys import  AppSys
+from system.AppSys import  AppSys
 
 
 
@@ -8,7 +8,7 @@ def main():
 
 
 if __name__=='__main__':
-    AppSys.debug("go!")
+    app=AppSys()
 
 
 

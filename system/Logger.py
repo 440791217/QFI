@@ -1,11 +1,10 @@
 import logging
 import colorlog
 
-class Logger:
-    logger=None
 
-    @staticmethod
-    def init_logger(logfile=None, loglevel='debug'):
+class Logger:
+
+    def __init__(self, log_name='mylog',logfile=None, loglevel='debug'):
         """初始化日志记录器
     
         Args:
@@ -14,10 +13,13 @@ class Logger:
     
         Returns:
             logger: 返回初始化后的logger对象
+            :param loglevel:
+            :param logfile:
+            :param log_name:
         """
         # 创建logger对象
-        Logger.logger = logging.getLogger(__name__)
-        Logger.logger.setLevel(logging.DEBUG)
+        self.logger = logging.getLogger(log_name)
+        self.logger.setLevel(logging.DEBUG)
 
         # 创建控制台输出handler
         console_handler = colorlog.StreamHandler()
@@ -32,7 +34,7 @@ class Logger:
                 'CRITICAL': 'red,bg_white'
             }
         ))
-        Logger.logger.addHandler(console_handler)
+        self.logger.addHandler(console_handler)
 
         if logfile:
             # 创建文件输出handler
@@ -42,52 +44,46 @@ class Logger:
                 '%(asctime)s [%(levelname)s] %(message)s',
                 datefmt='%Y-%m-%d %H:%M:%S'
             ))
-            Logger.logger.addHandler(file_handler)
+            self.logger.addHandler(file_handler)
 
         # 设置日志级别
         if loglevel == 'debug':
-            Logger.logger.setLevel(logging.DEBUG)
+            self.logger.setLevel(logging.DEBUG)
         elif loglevel == 'info':
-            Logger.logger.setLevel(logging.INFO)
+            self.logger.setLevel(logging.INFO)
         elif loglevel == 'warning':
-            Logger.logger.setLevel(logging.WARNING)
+            self.logger.setLevel(logging.WARNING)
         elif loglevel == 'error':
-            Logger.logger.setLevel(logging.ERROR)
+            self.logger.setLevel(logging.ERROR)
         elif loglevel == 'critical':
-            Logger.logger.setLevel(logging.CRITICAL)
+            self.logger.setLevel(logging.CRITICAL)
 
+    def debug(self, msg):
+        self.logger.debug(msg)
 
-    @staticmethod
-    def debug(msg):
-        Logger.logger.debug(msg)
+    def info(self, msg):
+        self.logger.info(msg)
 
-    @staticmethod
-    def info(msg):
-        Logger.logger.info(msg)
+    def warning(self, msg):
+        self.logger.warning(msg)
 
-    @staticmethod
-    def warning(msg):
-        Logger.logger.warning(msg)
+    def error(self, msg):
+        self.logger.error(msg)
 
-    @staticmethod
-    def error(msg):
-        Logger.logger.error(msg)
+    def critical(self, msg):
+        self.logger.critical(msg)
 
-    @staticmethod
-    def critical(msg):
-        Logger.logger.critical(msg)
-
-Logger.init_logger(None, 'debug')
 
 if __name__ == '__main__':
-
+    logger = Logger()
+    # logger.init_logger(None, 'debug')
     # 初始化日志记录器，不写文件
-    #logger = init_logger(None, 'debug')
-    Logger.debug('debug message')
-    Logger.info('info message')
-    Logger.warning('warning message')
-    Logger.error('error message')
-    Logger.critical('critical message')
+    # logger = init_logger(None, 'debug')
+    logger.debug('debug message')
+    logger.info('info message')
+    logger.warning('warning message')
+    logger.error('error message')
+    logger.critical('critical message')
 
     # 初始化日志记录器，写文件
     # logger = init_logger('test.log', 'info')
