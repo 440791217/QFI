@@ -50,12 +50,16 @@ class Config:
         return os.path.join(Config.get_dir_path_app(), Config.APP_NAME + '.elf')
 
     @staticmethod
-    def get_file_path_app_objdump():
+    def get_file_path_app_objdump_asm():
         return os.path.join(Config.get_dir_path_app_tmp(), 'objdump.asm')
 
     @staticmethod
-    def get_file_path_app_objdump_wash():
+    def get_file_path_app_objdump_wash_asm():
         return os.path.join(Config.get_dir_path_app_tmp(), 'objdump_wash.asm')
+
+    @staticmethod
+    def get_file_path_app_objdump_wash_json():
+        return os.path.join(Config.get_dir_path_app_tmp(), 'objdump_wash.json')
 
     @staticmethod
     def get_file_path_app_trace_inst():

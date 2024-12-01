@@ -17,8 +17,8 @@ class Debugger:
         self.trace_inst_log = Config.get_file_path_app_trace_inst()
         self.trace_inst_wash_log = Config.get_file_path_app_trace_inst_wash()
         self.trace_golden_result_log = Config.get_file_path_app_trace_golden_result()
-        self.objdump_log = Config.get_file_path_app_objdump()
-        self.objdump_wash_log = Config.get_file_path_app_objdump_wash()
+        self.objdump_log = Config.get_file_path_app_objdump_asm()
+        self.objdump_wash_log = Config.get_file_path_app_objdump_wash_asm()
         self.objdump_bin = Config.BIN_OBJ_DUMP
         self.elf_bin = Config.get_file_path_app_bin()
         self.total_inst = -1

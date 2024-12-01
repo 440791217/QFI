@@ -35,8 +35,11 @@ class JLinkGDBServer(threading.Thread):
                     Logger.error('JLink GDBServer stdout1:{}'.format(out))
                     self.close()
                     break
+                elif 'Target connection lost' in out:
+                    Logger.error('JLink GDBServer stdout2:{}'.format(out))
+                    break
                 else:
-                    Logger.debug('JLink GDBServer stdout2:{}'.format(out))
+                    Logger.debug('JLink GDBServer stdout3:{}'.format(out))
             if not self.running:
                 self.close()
                 Logger.error('JLink GDBServer active closed.')
