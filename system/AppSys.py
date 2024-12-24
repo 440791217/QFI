@@ -68,4 +68,5 @@ class AppSys:
 
 
 if __name__ == '__main__':
+    appSys=AppSys()
     pass

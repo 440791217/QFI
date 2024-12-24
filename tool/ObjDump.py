@@ -99,6 +99,13 @@ class ObjDump:
                         continue
                     wf.write('{}\r\n'.format(l))
 
+    # @staticmethod
+    # def parse_main(objdump_wash_log1=None):
+    #     assert (objdump_wash_log1)
+    #     with open(objdump_wash_log1,'r') as rf:
+    #         data=json.load(rf)
+
+
 
 if __name__ == '__main__':
     ret = ObjDump.disassemble(objdump_log=Config.get_file_path_app_objdump_asm(),

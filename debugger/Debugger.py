@@ -3,16 +3,95 @@ import os
 import random
 import time
 
-from debugger.GDBServer import JLinkGDBServer
+from debugger.GDB import GDB
+from debugger.GDBServer import GDBServer
 from system.Config import Config
 from system.Constant import Constant
 from system.Logger import Logger
 
 
+def update_faults(fpath, faults):
+    with open(fpath, 'w') as wf:
+        json.dump(faults, wf, indent=2)
+
+
+def load_faults(fpath):
+    with open(fpath, 'r') as rf:
+        faults = json.load(rf)
+    return faults
+
+
+def gen_reg_faults(exec_times, regs, bfm, reg_width):
+    faults = []
+    for i in range(exec_times):
+        before_tm = random.random() * 3
+        regs = random.sample(regs, 1)
+        fault = {
+            'id': i,
+            'regs': [],
+            'before_tm': before_tm,
+            'flips': [],
+            'injected': False
+        }
+        for reg in regs:
+            flips = random.sample(range(reg_width), bfm)
+            obj={
+                'name':reg,
+                'flips': flips,
+                'before_value': -1,
+                'after_value': -1,
+            }
+            fault['regs'].append(obj)
+        faults.append(fault)
+    return faults
+
+# def inject_reg_fault(fault):
+
+def inject_fault_once(mode=None, fault=None):
+    if mode == Constant.FAULT_MODE_RF:
+        gdb = GDB()
+        gdb.set_elf_bin('/home/mark/data/PycharmProjects/QFI/app/stm32f407_test/stm32f407_test.elf')
+        gdb.set_gdb_bin('arm-none-eabi-gdb')
+        gdb.set_fault(fault)
+        gdb.start()
+        gdb.join()
+        pass
+    else:
+        assert mode == 'Invalid Fault Mode.'
+    fault['injected'] = True
+    return fault
+
+
 class Debugger:
     def __init__(self):
         ###gdb server
-        self.GDBServer = JLinkGDBServer(log_file=Config.get_file_path_app_gdb_server_log())
+        self.gdb_server = None
+        ##init Configuration
+        self.trace_inst_log = None
+        self.trace_inst_wash_log = None
+        self.trace_golden_result_log = None
+        self.objdump_log = None
+        self.objdump_wash_log = None
+        self.objdump_bin = None
+        self.elf_bin = None
+        self.total_inst = None
+        self.main_entry_addr = None
+        #####fi info
+        self.fi_exec_times = None
+        self.fi_mode = None
+        self.fi_bfm = None
+        self.fi_regs = None
+        self.fi_reg_width = None
+        self.fi_flag_clear_result = None
+        pass
+
+    def init(self):
+        ###gdb server
+        ###gdb server
+        self.gdb_server = None
+        # self.gdb_server = GDBServer()
+        # self.gdb_server.set_command(
+        #     'JLinkGDBServer -port 2331 -device STM32F407ZG -endian little -speed 4000 -if swd -vd -nogui'.split())
         ##init Configuration
         self.trace_inst_log = Config.get_file_path_app_trace_inst()
         self.trace_inst_wash_log = Config.get_file_path_app_trace_inst_wash()
@@ -35,73 +114,63 @@ class Debugger:
         else:
             Logger.error('invalid fault mode occurs! fi_mode:{}'.format(self.Config.FAULT_MODE))
             exit(-1)
-        pass
 
-    def gen_reg_fault(self, id, regs, bfm, total_inst, reg_width):
-        reg = random.sample(regs, 1)
-        sec = random.random() * 3
-        flips = random.sample(range(reg_width), bfm)
-        fault = {
-            'id': id,
-            'reg': reg,
-            'sec': sec,
-            'flips': flips,
-            'injected': False
-        }
-        return fault
+    def check_gdb_server(self):
+        assert self.gdb_server.running
+        assert self.gdb_server.proc
+        assert self.gdb_server.returncode == 0
 
     def gen_faults(self):
-        Logger.debug('Start to generate faults!')
-        faults = []
-        if self.fi_flag_clear_result or not os.path.exists(self.fi_file_faults):
-            Logger.debug('Generate a new faults!')
-            for i in range(self.fi_exec_times):
-                if self.fi_mode == Constant.FAULT_MODE_RF:
-                    fault = self.gen_reg_fault(id=i, regs=self.fi_regs, bfm=self.fi_bfm,
-                                               reg_width=self.fi_reg_width, total_inst=self.total_inst)
-                    faults.append(fault)
-            with open(self.fi_file_faults, 'w') as wf:
-                json.dump(faults, wf, indent=Constant.JSON_INDENT)
+        if self.fi_mode == Constant.FAULT_MODE_RF:
+            faults = gen_reg_faults(exec_times=self.fi_exec_times, regs=self.fi_regs, bfm=self.fi_bfm,
+                                    reg_width=self.fi_reg_width)
         else:
-            Logger.debug('Faults already have existed!')
+            assert self.fi_mode == 'Invalid mode'
+        with open(self.fi_file_faults, 'w') as wf:
+            json.dump(faults, wf, indent=2)
 
-    def inject_reg_fault(self, fault):
+    def do_inject_fault_once(self, mode=None, fault=None):
+
         pass
 
     def inject_faults(self):
-        Logger.debug('Start to generate faults.')
-        fp = self.fi_file_faults
-        with open(fp, 'r') as rf:
-            faults = json.load(rf)
+        fpath = self.fi_file_faults
+        faults = load_faults(fpath=self.fi_file_faults)
+        log_file_dir = os.path.join(Config.get_dir_path_app_result(), self.fi_mode, '{}'.format(self.fi_bfm))
+        if not os.path.exists(log_file_dir):
+            os.makedirs(log_file_dir)
         for fault in faults:
-            if fault['injected']:
-                pass
-            else:
-                if self.fi_mode == Constant.FAULT_MODE_RF:
-                    self.inject_reg_fault(fault=fault)
-                fault['injected'] = True
+            log_file_name='{:04d}.txt'.format(fault['id'])
+            log_file_path=os.path.join(log_file_dir,log_file_name)
+            if not fault['injected']:
+                fault['log_file_path']=log_file_path
+                # check gdbserver
+                self.check_gdb_server()
+                # inject fault
+                fault = inject_fault_once(mode=self.fi_mode, fault=fault)
             if fault['id'] != 0 and fault['id'] % 50 == 0:
-                with open(fp, 'w') as wf:
-                    json.dump(faults, wf, indent=Constant.JSON_INDENT)
-        with open(fp, 'w') as wf:
-            json.dump(faults, wf, indent=Constant.JSON_INDENT)
-        pass
+                update_faults(fpath=fpath, faults=faults)
+        update_faults(fpath=fpath, faults=faults)
 
     def main(self):
-        self.GDBServer.start()
-        time.sleep(1)
-        if not self.GDBServer.running:
-            Logger.error('Errors occur in GDBServer!')
-            exit(-1)
+        if self.fi_flag_clear_result or not os.path.exists(self.fi_file_faults):
+            self.gen_faults()
+            Logger.debug('Generate faults.')
         else:
-            Logger.debug('GDBServer is running!')
-        time.sleep(2)
-        self.gen_faults()
+            Logger.debug('Read existed faults.')
+        self.gdb_server = GDBServer()
+        self.gdb_server.set_command(
+            'JLinkGDBServer -port 2331 -device STM32F407ZG -endian little -speed 4000 -if swd -vd -nogui'.split())
+        self.gdb_server.start()
+        Logger.debug('Start gdb_server.')
+        time.sleep(1)
+        Logger.debug('Start to inject faults.')
         self.inject_faults()
-        self.GDBServer.close()
-
+        self.gdb_server.close()
+        Logger.debug('Close gdb_server. The returncode of gdb_server is {}.'.format(self.gdb_server.returncode))
 
 
 if __name__ == '__main__':
     debugger = Debugger()
+    debugger.init()
     debugger.main()

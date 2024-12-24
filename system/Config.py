@@ -10,14 +10,14 @@ class Config:
     #######predefine end
 
     # user attribute start
-    APP_NAME = 'stm32f407_test'
+    APP_NAME = 'stm32F407_mk'
     PATH_ROOT = '/home/mark/data/PycharmProjects/QFI' #os.getcwd()
     ###user attribute
     FAULT_MODE = Constant.FAULT_MODE_RF
     FAULT_BFM = Constant.FAULT_BFM_1
     EXEC_TIMES = 1000
     FAULT_RESET_ALL = False
-    FAULT_FLAG_CLEAR_RESULT = False
+    FAULT_FLAG_CLEAR_RESULT = True
     BIN_OBJ_DUMP = 'arm-none-eabi-objdump'
     BIN_QEMU_LAUNCHER = 'qemu-system-arm'
     FAULT_REGS = ['r0', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'r8', 'r9', 'r11', 'r12', 'sp', 'lr', 'pc']

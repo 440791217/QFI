@@ -2,7 +2,7 @@ class Constant:
     # fault bfm
     FAULT_BFM_1 = 1
     # fault mode
-    FAULT_MODE_RF = 'register_file'
+    FAULT_MODE_RF = 'RF'
 
     JSON_INDENT = 2
 
