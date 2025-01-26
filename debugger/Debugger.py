@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import shutil
 import time
 
 from debugger.GDB import GDB
@@ -25,7 +26,7 @@ def gen_reg_faults(exec_times, regs, bfm, reg_width):
     faults = []
     for i in range(exec_times):
         before_tm = random.random() * 3
-        regs = random.sample(regs, 1)
+        random_regs = random.sample(regs, 1)
         fault = {
             'id': i,
             'regs': [],
@@ -33,7 +34,7 @@ def gen_reg_faults(exec_times, regs, bfm, reg_width):
             'flips': [],
             'injected': False
         }
-        for reg in regs:
+        for reg in random_regs:
             flips = random.sample(range(reg_width), bfm)
             obj={
                 'name':reg,
@@ -114,6 +115,7 @@ class Debugger:
         else:
             Logger.error('invalid fault mode occurs! fi_mode:{}'.format(self.Config.FAULT_MODE))
             exit(-1)
+        self.log_file_dir = os.path.join(Config.get_dir_path_app_result(), self.fi_mode, '{}'.format(self.fi_bfm))
 
     def check_gdb_server(self):
         assert self.gdb_server.running
@@ -136,7 +138,7 @@ class Debugger:
     def inject_faults(self):
         fpath = self.fi_file_faults
         faults = load_faults(fpath=self.fi_file_faults)
-        log_file_dir = os.path.join(Config.get_dir_path_app_result(), self.fi_mode, '{}'.format(self.fi_bfm))
+        log_file_dir = self.log_file_dir
         if not os.path.exists(log_file_dir):
             os.makedirs(log_file_dir)
         for fault in faults:
@@ -155,6 +157,10 @@ class Debugger:
     def main(self):
         if self.fi_flag_clear_result or not os.path.exists(self.fi_file_faults):
             self.gen_faults()
+            # exit(-1)
+            if os.path.exists(self.log_file_dir):
+                shutil.move(self.log_file_dir,self.log_file_dir+'_cache')
+                # shutil.rmtree(self.log_file_dir)
             Logger.debug('Generate faults.')
         else:
             Logger.debug('Read existed faults.')
@@ -168,6 +174,7 @@ class Debugger:
         self.inject_faults()
         self.gdb_server.close()
         Logger.debug('Close gdb_server. The returncode of gdb_server is {}.'.format(self.gdb_server.returncode))
+
 
 
 if __name__ == '__main__':

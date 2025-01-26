@@ -1,7 +1,7 @@
 import os.path
 import json
 
-
+from debugger.Debugger import Debugger
 from system.Constant import Constant
 ##manager
 from system.Config import Config
@@ -69,4 +69,7 @@ class AppSys:
 
 if __name__ == '__main__':
     appSys=AppSys()
+    debugger = Debugger()
+    debugger.init()
+    debugger.main()
     pass

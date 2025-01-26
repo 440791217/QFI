@@ -15,12 +15,12 @@ class Config:
     ###user attribute
     FAULT_MODE = Constant.FAULT_MODE_RF
     FAULT_BFM = Constant.FAULT_BFM_1
-    EXEC_TIMES = 1000
+    EXEC_TIMES = 1600
     FAULT_RESET_ALL = False
-    FAULT_FLAG_CLEAR_RESULT = True
+    FAULT_FLAG_CLEAR_RESULT = False
     BIN_OBJ_DUMP = 'arm-none-eabi-objdump'
     BIN_QEMU_LAUNCHER = 'qemu-system-arm'
-    FAULT_REGS = ['r0', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'r8', 'r9', 'r11', 'r12', 'sp', 'lr', 'pc']
+    FAULT_REGS = ['r0', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6', 'r7', 'r8', 'r9','r10' ,'r11', 'r12', 'r13', 'r14', 'r15']
     FAULT_REG_WIDTH = 32
 
     @staticmethod

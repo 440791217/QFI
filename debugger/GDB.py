@@ -194,7 +194,7 @@ class GDB(threading.Thread):
             wf.write('{}\n'.format(WF_HEAD))
             self.check_init()
             before_tm=self.fault['before_tm']
-            after_tm=1
+            after_tm=1.5
             #step1:launch
             self.launch()
             self.init()
